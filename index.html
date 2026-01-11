@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Manager with Auto-Cleanup</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #f4f7f6;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            background: white;
+            width: 400px;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        h2 { text-align: center; color: #2c3e50; margin-top: 0; }
+        
+        .info-text {
+            font-size: 12px;
+            color: #7f8c8d;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .input-group { display: flex; gap: 10px; margin-bottom: 25px; }
+
+        input[type="text"] {
+            flex-grow: 1;
+            padding: 12px;
+            border: 2px solid #eee;
+            border-radius: 6px;
+            outline: none;
+        }
+
+        input[type="text"]:focus { border-color: #3498db; }
+
+        button#addBtn {
+            padding: 10px 20px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        button#addBtn:hover { background-color: #2980b9; }
+
+        ul { list-style-type: none; padding: 0; }
+
+        li {
+            background: #fff;
+            border-bottom: 1px solid #f0f0f0;
+            padding: 12px 5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        input[type="checkbox"] {
+            width: 18px; 
+            height: 18px; 
+            accent-color: #27ae60;
+            cursor: pointer;
+        }
+
+        .task-text { flex-grow: 1; font-size: 16px; color: #333; }
+        
+        .completed { text-decoration: line-through; color: #aaa; }
+
+        .delete-btn {
+            background-color: white;
+            color: #e74c3c;
+            border: 1px solid #e74c3c;
+            border-radius: 4px;
+            padding: 5px 10px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .delete-btn:hover { background-color: #e74c3c; color: white; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>My Tasks</h2>
+        <p class="info-text">Completed tasks are removed after 24 hours.</p>
+        
+        <div class="input-group">
+            <input type="text" id="taskInput" placeholder="What needs to be done?">
+            <button id="addBtn" onclick="addTask()">Add</button>
+        </div>
+
+        <ul id="taskList"></ul>
+    </div>
+
+    <script>
+        // --- DATA MANAGEMENT ---
+        
+        // Load tasks from Local Storage or start with empty array
+        let tasks = JSON.parse(localStorage.getItem('myTasks')) || [];
+
+        // 1. Run cleanup immediately on load
+        cleanupOldTasks();
+        // 2. Render the list
+        renderTasks();
+
+        function addTask() {
+            const input = document.getElementById("taskInput");
+            const text = input.value;
+
+            if (text === '') { alert("Please write a task!"); return; }
+
+            // Add new task object
+            const newTask = {
+                id: Date.now(),      // Unique ID
+                text: text,
+                completed: false,
+                completedAt: null    // Timestamp for when it was finished
+            };
+
+            tasks.push(newTask);
+            saveAndRender();
+            input.value = "";
+        }
+
+        function toggleTask(id) {
+            // Find task in array
+            const task = tasks.find(t => t.id === id);
+            
+            if (task) {
+                task.completed = !task.completed;
+                // If we just finished it, set timestamp. If unchecking, clear timestamp.
+                task.completedAt = task.completed ? Date.now() : null;
+                saveAndRender();
+            }
+        }
+
+        function deleteTask(id) {
+            tasks = tasks.filter(t => t.id !== id);
+            saveAndRender();
+        }
+
+        // --- THE 24-HOUR LOGIC ---
+        function cleanupOldTasks() {
+            const now = Date.now();
+            const oneDayInMs = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+
+            // Filter out tasks that are completed AND older than 24 hours
+            const initialCount = tasks.length;
+            
+            tasks = tasks.filter(task => {
+                // Keep if NOT completed
+                if (!task.completed) return true;
+
+                // Keep if completed less than 24 hours ago
+                const timeSinceCompletion = now - task.completedAt;
+                return timeSinceCompletion < oneDayInMs;
+            });
+
+            if (tasks.length < initialCount) {
+                console.log("Cleaned up old tasks!");
+                saveData(); // Save the cleaned list
+            }
+        }
+
+        // --- RENDER & SAVE HELPERS ---
+
+        function saveData() {
+            localStorage.setItem('myTasks', JSON.stringify(tasks));
+        }
+
+        function saveAndRender() {
+            saveData();
+            renderTasks();
+        }
+
+        function renderTasks() {
+            const ul = document.getElementById("taskList");
+            ul.innerHTML = ""; // Clear current list
+
+            tasks.forEach(task => {
+                const li = document.createElement("li");
+
+                // Checkbox
+                const checkbox = document.createElement("input");
+                checkbox.type = "checkbox";
+                checkbox.checked = task.completed;
+                checkbox.onclick = () => toggleTask(task.id);
+
+                // Text
+                const span = document.createElement("span");
+                span.textContent = task.text;
+                span.className = "task-text " + (task.completed ? "completed" : "");
+
+                // Delete Button
+                const deleteBtn = document.createElement("button");
+                deleteBtn.textContent = "✕";
+                deleteBtn.className = "delete-btn";
+                deleteBtn.onclick = () => deleteTask(task.id);
+
+                li.appendChild(checkbox);
+                li.appendChild(span);
+                li.appendChild(deleteBtn);
+                ul.appendChild(li);
+            });
+        }
+
+        // Allow Enter key
+        document.getElementById("taskInput").addEventListener("keypress", function(e) {
+            if (e.key === "Enter") addTask();
+        });
+    </script>
+
+</body>
+</html>
