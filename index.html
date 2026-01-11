@@ -22,6 +22,7 @@
             --deleted-bg: #ffecec;
             --deleted-border: #ffcccc;
             --deleted-text: #c0392b;
+            --outline-color: #fff; /* Default outline for dark text */
         }
 
         body.dark-mode {
@@ -36,6 +37,7 @@
             --deleted-bg: #3e1a1a;
             --deleted-border: #682828;
             --deleted-text: #e74c3c;
+            --outline-color: #000; /* Dark outline for light text */
         }
 
         body {
@@ -47,6 +49,16 @@
             display: flex;
             overflow: hidden;
             transition: background-color 0.3s, color 0.3s;
+        }
+
+        /* --- TEXT OUTLINE UTILITY --- */
+        .text-outline {
+            text-shadow: 
+                -1px -1px 0 var(--outline-color),  
+                 1px -1px 0 var(--outline-color),
+                -1px  1px 0 var(--outline-color),
+                 1px  1px 0 var(--outline-color);
+            letter-spacing: 0.5px;
         }
 
         /* --- LAYOUT --- */
@@ -87,10 +99,21 @@
         .user-avatar {
             width: 30px; height: 30px; border-radius: 50%;
             display: flex; justify-content: center; align-items: center;
-            color: white; font-weight: bold; font-size: 14px;
+            color: #fff; 
+            font-weight: bold; font-size: 14px;
+            border: 1px solid rgba(0,0,0,0.1);
+            text-shadow: 0 0 2px rgba(0,0,0,0.5);
         }
         .user-info { flex-grow: 1; overflow: hidden; }
-        .user-name-display { font-weight: bold; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        
+        .user-name-display { 
+            font-weight: 800; 
+            font-size: 15px; 
+            white-space: nowrap; 
+            overflow: hidden; 
+            text-overflow: ellipsis; 
+        }
+
         .edit-name-btn {
             background: none; border: none; cursor: pointer; font-size: 14px; color: var(--text-secondary);
         }
@@ -250,7 +273,7 @@
             <div class="user-profile-box">
                 <div class="user-avatar" id="userAvatar">?</div>
                 <div class="user-info">
-                    <div class="user-name-display" id="userNameDisplay">Anon</div>
+                    <div class="user-name-display text-outline" id="userNameDisplay">Anon</div>
                 </div>
                 <button class="edit-name-btn" onclick="openProfileModal()" title="Change Name">✎</button>
             </div>
@@ -304,15 +327,17 @@
 
     <script>
         // --- STATE & IDENTITY ---
-        // 'user' holds the local session info. 'id' is the hidden cache.
         let user = { id: null, name: 'Anon', color: '#3498db' };
-        
-        // 'peerProfiles' maps UserIDs to {name, color}. This allows updating history.
         let peerProfiles = {}; 
-
         let appData = {}; 
         let activeListId = null;
         let settings = { autoDelete: false };
+
+        // Pre-seed with hardcoded defaults in case fetch fails
+        let customColors = {
+            "mmk1102": "#000000",
+            "author": "#000000"
+        };
 
         let peer = null;
         let connections = {}; 
@@ -333,18 +358,7 @@
         const storedProfiles = localStorage.getItem('taskerProfiles');
         if (storedProfiles) peerProfiles = JSON.parse(storedProfiles);
 
-        // 3. Load User Name/Color if exists
-        if (peerProfiles[user.id]) {
-            user.name = peerProfiles[user.id].name;
-            user.color = peerProfiles[user.id].color;
-            document.getElementById('loginModal').style.display = 'none';
-            initApp();
-        } else {
-            // First time user needs to set name
-            document.getElementById('loginModal').style.display = 'flex';
-        }
-
-        // 4. Load Data
+        // 3. Load Data
         const savedData = localStorage.getItem('taskerMesh_v4');
         if (savedData) {
             appData = JSON.parse(savedData);
@@ -355,10 +369,44 @@
             activeListId = defId;
         }
 
-        // 5. Load Settings
+        // 4. Load Settings
         const savedSettings = localStorage.getItem('taskerSettings');
         if(savedSettings) settings = JSON.parse(savedSettings);
         document.getElementById('autoDeleteToggle').checked = settings.autoDelete;
+
+        // 5. Fetch Custom Colors
+        async function loadCustomColors() {
+            try {
+                // Add timestamp to prevent caching
+                const response = await fetch('https://mmk1102x.github.io/tasker/users.json?t=' + Date.now());
+                if (response.ok) {
+                    const data = await response.json();
+                    // Normalize to lowercase keys
+                    for (let key in data) {
+                        customColors[key.toLowerCase()] = data[key];
+                    }
+                    // Refresh UI in case colors changed
+                    if (user.name) {
+                        user.color = stringToColor(user.name);
+                        updateProfileUI();
+                        renderTasks();
+                    }
+                }
+            } catch (e) {
+                console.log("Using default/hardcoded colors (Fetch failed or file missing)");
+            }
+        }
+        loadCustomColors();
+
+        // 6. Check Login Status
+        if (peerProfiles[user.id]) {
+            user.name = peerProfiles[user.id].name;
+            user.color = peerProfiles[user.id].color; // This might be stale, updated by loadCustomColors later
+            document.getElementById('loginModal').style.display = 'none';
+            initApp();
+        } else {
+            document.getElementById('loginModal').style.display = 'flex';
+        }
 
         // --- THEME LOGIC ---
         function initTheme() {
@@ -393,6 +441,14 @@
 
         // --- IDENTITY & PROFILE SYSTEM ---
         function stringToColor(str) {
+            const lower = str.toLowerCase();
+            
+            // 1. Check Custom JSON Config (and hardcoded defaults)
+            if (customColors[lower]) {
+                return customColors[lower];
+            }
+
+            // 2. Fallback Hash Algorithm
             let hash = 0;
             for (let i = 0; i < str.length; i++) {
                 hash = str.charCodeAt(i) + ((hash << 5) - hash);
@@ -405,22 +461,19 @@
             const name = document.getElementById('nicknameInput').value.trim();
             if (!name) return alert("Name required");
             
-            // Update Local State
             user.name = name;
             user.color = stringToColor(name);
             
-            // Update Profile Map
             peerProfiles[user.id] = { name: user.name, color: user.color };
             saveProfiles();
 
             document.getElementById('loginModal').style.display = 'none';
             
-            // If app not started, start it. If running, just update UI/Broadcast
             if (!peer) initApp();
             else {
                 updateProfileUI();
                 renderTasks();
-                broadcastProfile(); // Tell everyone I changed my name
+                broadcastProfile(); 
             }
         }
 
@@ -435,7 +488,13 @@
         }
 
         function updateProfileUI() {
-            document.getElementById('userNameDisplay').innerText = user.name;
+            // Recalculate color in case JSON loaded late
+            user.color = stringToColor(user.name);
+            
+            const nameEl = document.getElementById('userNameDisplay');
+            nameEl.innerText = user.name;
+            nameEl.style.color = user.color; 
+            
             const avatar = document.getElementById('userAvatar');
             avatar.style.backgroundColor = user.color;
             avatar.innerText = user.name.charAt(0).toUpperCase();
@@ -523,10 +582,8 @@
                 connections[conn.peer] = conn;
                 updatePeerUI();
                 
-                // 1. Send Profile (Identity)
                 conn.send({ type: 'PROFILE', id: user.id, name: user.name, color: user.color });
 
-                // 2. Send Data
                 if(appData[activeListId]) {
                     conn.send({ 
                         type: 'SYNC', 
@@ -536,7 +593,6 @@
                     });
                 }
                 
-                // 3. Send Peers
                 const knownPeers = Object.keys(connections).filter(id => id !== conn.peer);
                 if (knownPeers.length > 0) conn.send({ type: 'PEERS', peers: knownPeers });
             });
@@ -589,10 +645,10 @@
 
         // --- DATA HANDLING ---
         function handleProfileMessage(msg) {
-            // Update local map of who is who
-            peerProfiles[msg.id] = { name: msg.name, color: msg.color };
+            // Recalculate color using local logic (in case they don't have the JSON yet)
+            const resolvedColor = stringToColor(msg.name);
+            peerProfiles[msg.id] = { name: msg.name, color: resolvedColor };
             saveProfiles();
-            // Re-render tasks to reflect new names/colors
             renderTasks();
         }
 
@@ -637,9 +693,9 @@
                 id: myPeerId + '-' + Date.now(),
                 text: text,
                 completed: false,
-                authorId: user.id, // Store ID (Hidden Cache)
-                author: user.name, // Fallback
-                authorColor: user.color, // Fallback
+                authorId: user.id, 
+                author: user.name, 
+                authorColor: user.color, 
                 lastUpdated: Date.now(),
                 deleted: false,
                 deletedBy: null,
@@ -682,12 +738,16 @@
 
         // --- RENDERING ---
         function getAuthorDetails(task) {
-            // Try to find author by ID in our profile map
+            let info = { name: task.author, color: task.authorColor };
+            
+            // 1. Try to find author by ID in our profile map
             if (task.authorId && peerProfiles[task.authorId]) {
-                return peerProfiles[task.authorId];
+                info = peerProfiles[task.authorId];
             }
-            // Fallback to stored snapshot
-            return { name: task.author, color: task.authorColor };
+            
+            // 2. Ensure color is up to date with current customColors config
+            info.color = stringToColor(info.name);
+            return info;
         }
 
         function renderTasks() {
@@ -706,7 +766,6 @@
                 li.className = 'task-item';
                 if (task.deleted) li.classList.add('marked-deleted');
                 
-                // Dynamic Author Lookup
                 const authorInfo = getAuthorDetails(task);
                 li.style.borderLeftColor = authorInfo.color;
 
@@ -721,7 +780,7 @@
                 if (task.deleted) {
                     statusText = `<span style="color:var(--deleted-text); font-weight:bold;">Deleted by ${task.deletedBy || 'someone'}</span>`;
                 } else {
-                    statusText = `Added by <span class="author-tag" style="color:${authorInfo.color}">${authorInfo.name}</span>`;
+                    statusText = `Added by <span class="author-tag text-outline" style="color:${authorInfo.color}">${authorInfo.name}</span>`;
                 }
 
                 li.innerHTML = `
