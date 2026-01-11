@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tasker - Mesh with Share Links</title>
+    <title>Tasker</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✅</text></svg>">
 
@@ -46,6 +46,7 @@
             height: 100vh;
             display: flex;
             overflow: hidden;
+            transition: background-color 0.3s, color 0.3s;
         }
 
         /* --- LAYOUT --- */
@@ -60,6 +61,7 @@
             flex-direction: column;
             padding: 20px;
             box-sizing: border-box;
+            transition: background-color 0.3s;
         }
 
         .sidebar-header {
@@ -70,6 +72,29 @@
             justify-content: space-between;
             align-items: center;
         }
+
+        /* User Profile Box */
+        .user-profile-box {
+            background: rgba(0,0,0,0.05);
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border: 1px solid var(--border-color);
+        }
+        .user-avatar {
+            width: 30px; height: 30px; border-radius: 50%;
+            display: flex; justify-content: center; align-items: center;
+            color: white; font-weight: bold; font-size: 14px;
+        }
+        .user-info { flex-grow: 1; overflow: hidden; }
+        .user-name-display { font-weight: bold; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .edit-name-btn {
+            background: none; border: none; cursor: pointer; font-size: 14px; color: var(--text-secondary);
+        }
+        .edit-name-btn:hover { color: var(--btn-primary); }
 
         .team-list { list-style: none; padding: 0; flex-grow: 1; overflow-y: auto; }
 
@@ -103,19 +128,20 @@
         .main-content {
             flex-grow: 1; padding: 30px; overflow-y: auto;
             background: var(--bg-container); display: flex; flex-direction: column; align-items: center;
+            transition: background-color 0.3s;
         }
         .content-wrapper { width: 600px; max-width: 100%; }
 
         /* --- MODAL --- */
-        #loginModal {
+        .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85); display: flex; justify-content: center; align-items: center; z-index: 1000;
+            background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 1000;
         }
-        .login-box {
+        .modal-box {
             background: var(--bg-container); padding: 30px; border-radius: 10px;
             text-align: center; width: 300px; border: 1px solid var(--border-color);
         }
-        .login-input {
+        .modal-input {
             width: 90%; padding: 10px; margin: 15px 0;
             border: 1px solid var(--border-color); border-radius: 5px;
             background: var(--bg-body); color: var(--text-primary);
@@ -164,7 +190,6 @@
             transition: transform 0.2s;
         }
         
-        /* DELETED STATE STYLING */
         li.task-item.marked-deleted {
             background-color: var(--deleted-bg);
             border-color: var(--deleted-border);
@@ -175,11 +200,7 @@
             color: var(--deleted-text);
         }
         li.task-item.marked-deleted .delete-btn {
-            background: var(--deleted-text);
-            color: white;
-            border-radius: 4px;
-            padding: 2px 8px;
-            font-weight: bold;
+            background: var(--deleted-text); color: white; border-radius: 4px; padding: 2px 8px; font-weight: bold;
         }
         li.task-item.marked-deleted .delete-btn:hover { opacity: 0.8; }
 
@@ -200,20 +221,20 @@
         
         @media (max-width: 700px) {
             .app-layout { flex-direction: column; }
-            .sidebar { width: 100%; height: auto; max-height: 250px; padding: 10px; }
+            .sidebar { width: 100%; height: auto; max-height: 300px; padding: 10px; }
             .main-content { padding: 15px; }
         }
     </style>
 </head>
 <body>
 
-    <!-- LOGIN MODAL -->
-    <div id="loginModal">
-        <div class="login-box">
-            <h3>Tasker Mesh</h3>
-            <p>Enter a nickname to join.</p>
-            <input type="text" id="nicknameInput" class="login-input" placeholder="Your Name" maxlength="15">
-            <button class="action-btn" onclick="login()">Start Tasking</button>
+    <!-- LOGIN / RENAME MODAL -->
+    <div id="loginModal" class="modal-overlay" style="display: flex;">
+        <div class="modal-box">
+            <h3 id="modalTitle">Welcome to Tasker</h3>
+            <p>Enter a nickname to identify yourself.</p>
+            <input type="text" id="nicknameInput" class="modal-input" placeholder="Your Name" maxlength="15">
+            <button class="action-btn" onclick="submitProfile()">Save Profile</button>
         </div>
     </div>
 
@@ -221,10 +242,20 @@
         <!-- SIDEBAR -->
         <div class="sidebar">
             <div class="sidebar-header">
-                <span>My Teams</span>
-                <button class="theme-btn" onclick="toggleTheme()">🌙</button>
+                <span>Tasker</span>
+                <button class="theme-btn" id="themeToggleBtn" onclick="toggleTheme()">🌙</button>
+            </div>
+
+            <!-- User Profile (Hidden Cache ID) -->
+            <div class="user-profile-box">
+                <div class="user-avatar" id="userAvatar">?</div>
+                <div class="user-info">
+                    <div class="user-name-display" id="userNameDisplay">Anon</div>
+                </div>
+                <button class="edit-name-btn" onclick="openProfileModal()" title="Change Name">✎</button>
             </div>
             
+            <div style="font-size:12px; font-weight:bold; margin-bottom:5px; color:var(--text-secondary);">TEAMS</div>
             <ul class="team-list" id="teamListUi"></ul>
             
             <div class="sidebar-controls">
@@ -272,8 +303,13 @@
     </div>
 
     <script>
-        // --- STATE ---
-        let user = { name: 'Anon', color: '#3498db' };
+        // --- STATE & IDENTITY ---
+        // 'user' holds the local session info. 'id' is the hidden cache.
+        let user = { id: null, name: 'Anon', color: '#3498db' };
+        
+        // 'peerProfiles' maps UserIDs to {name, color}. This allows updating history.
+        let peerProfiles = {}; 
+
         let appData = {}; 
         let activeListId = null;
         let settings = { autoDelete: false };
@@ -283,7 +319,33 @@
         let myPeerId = null;
 
         // --- INITIALIZATION ---
-        const savedData = localStorage.getItem('taskerMesh_v3');
+        
+        // 1. Load or Generate Identity (Hidden Cache)
+        const storedId = localStorage.getItem('taskerUserId');
+        if (storedId) {
+            user.id = storedId;
+        } else {
+            user.id = 'user-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem('taskerUserId', user.id);
+        }
+
+        // 2. Load Profiles
+        const storedProfiles = localStorage.getItem('taskerProfiles');
+        if (storedProfiles) peerProfiles = JSON.parse(storedProfiles);
+
+        // 3. Load User Name/Color if exists
+        if (peerProfiles[user.id]) {
+            user.name = peerProfiles[user.id].name;
+            user.color = peerProfiles[user.id].color;
+            document.getElementById('loginModal').style.display = 'none';
+            initApp();
+        } else {
+            // First time user needs to set name
+            document.getElementById('loginModal').style.display = 'flex';
+        }
+
+        // 4. Load Data
+        const savedData = localStorage.getItem('taskerMesh_v4');
         if (savedData) {
             appData = JSON.parse(savedData);
             activeListId = Object.keys(appData)[0];
@@ -293,14 +355,43 @@
             activeListId = defId;
         }
 
-        // Load Settings
+        // 5. Load Settings
         const savedSettings = localStorage.getItem('taskerSettings');
         if(savedSettings) settings = JSON.parse(savedSettings);
         document.getElementById('autoDeleteToggle').checked = settings.autoDelete;
 
-        if (localStorage.getItem('theme') === 'dark') document.body.classList.add('dark-mode');
+        // --- THEME LOGIC ---
+        function initTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const btn = document.getElementById('themeToggleBtn');
 
-        // --- LOGIN & COLOR SYSTEM ---
+            if (savedTheme === 'dark') {
+                document.body.classList.add('dark-mode');
+                btn.innerText = '☀️';
+            } else if (savedTheme === 'light') {
+                document.body.classList.remove('dark-mode');
+                btn.innerText = '🌙';
+            } else {
+                if (systemPrefersDark) {
+                    document.body.classList.add('dark-mode');
+                    btn.innerText = '☀️';
+                } else {
+                    document.body.classList.remove('dark-mode');
+                    btn.innerText = '🌙';
+                }
+            }
+        }
+        initTheme();
+
+        function toggleTheme() {
+            document.body.classList.toggle('dark-mode');
+            const isDark = document.body.classList.contains('dark-mode');
+            document.getElementById('themeToggleBtn').innerText = isDark ? '☀️' : '🌙';
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+        }
+
+        // --- IDENTITY & PROFILE SYSTEM ---
         function stringToColor(str) {
             let hash = 0;
             for (let i = 0; i < str.length; i++) {
@@ -310,15 +401,51 @@
             return '#' + "00000".substring(0, 6 - c.length) + c;
         }
 
-        function login() {
+        function submitProfile() {
             const name = document.getElementById('nicknameInput').value.trim();
             if (!name) return alert("Name required");
+            
+            // Update Local State
             user.name = name;
             user.color = stringToColor(name);
+            
+            // Update Profile Map
+            peerProfiles[user.id] = { name: user.name, color: user.color };
+            saveProfiles();
+
             document.getElementById('loginModal').style.display = 'none';
+            
+            // If app not started, start it. If running, just update UI/Broadcast
+            if (!peer) initApp();
+            else {
+                updateProfileUI();
+                renderTasks();
+                broadcastProfile(); // Tell everyone I changed my name
+            }
+        }
+
+        function openProfileModal() {
+            document.getElementById('modalTitle').innerText = "Update Profile";
+            document.getElementById('nicknameInput').value = user.name;
+            document.getElementById('loginModal').style.display = 'flex';
+        }
+
+        function saveProfiles() {
+            localStorage.setItem('taskerProfiles', JSON.stringify(peerProfiles));
+        }
+
+        function updateProfileUI() {
+            document.getElementById('userNameDisplay').innerText = user.name;
+            const avatar = document.getElementById('userAvatar');
+            avatar.style.backgroundColor = user.color;
+            avatar.innerText = user.name.charAt(0).toUpperCase();
+        }
+
+        function initApp() {
             initNetwork();
             renderSidebar();
             renderTasks();
+            updateProfileUI();
         }
 
         // --- SETTINGS ---
@@ -367,18 +494,17 @@
             renderTasks();
         }
 
-        // --- PEERJS & SHARE LINKS ---
+        // --- PEERJS & NETWORKING ---
         function initNetwork() {
+            if(peer) return;
             peer = new Peer(); 
             peer.on('open', (id) => {
                 myPeerId = id;
                 document.getElementById('myIdDisplay').innerText = `My ID: ${id} (Click to Copy Link)`;
                 
-                // CHECK FOR HASH (Auto-Connect)
                 const targetId = window.location.hash.substring(1);
                 if(targetId && targetId !== myPeerId) {
-                    console.log("Auto-connecting to ID from URL:", targetId);
-                    document.getElementById('peerIdInput').value = targetId; // Visual feedback
+                    document.getElementById('peerIdInput').value = targetId;
                     connectToPeer(targetId);
                 }
             });
@@ -396,6 +522,11 @@
             conn.on('open', () => {
                 connections[conn.peer] = conn;
                 updatePeerUI();
+                
+                // 1. Send Profile (Identity)
+                conn.send({ type: 'PROFILE', id: user.id, name: user.name, color: user.color });
+
+                // 2. Send Data
                 if(appData[activeListId]) {
                     conn.send({ 
                         type: 'SYNC', 
@@ -404,12 +535,15 @@
                         tasks: appData[activeListId].tasks 
                     });
                 }
+                
+                // 3. Send Peers
                 const knownPeers = Object.keys(connections).filter(id => id !== conn.peer);
                 if (knownPeers.length > 0) conn.send({ type: 'PEERS', peers: knownPeers });
             });
 
             conn.on('data', (msg) => {
                 if (msg.type === 'SYNC') handleSyncMessage(msg);
+                else if (msg.type === 'PROFILE') handleProfileMessage(msg);
                 else if (msg.type === 'PEERS') {
                     msg.peers.forEach(pId => {
                         if (pId !== myPeerId && !connections[pId]) {
@@ -419,6 +553,11 @@
                 }
             });
             conn.on('close', () => { delete connections[conn.peer]; updatePeerUI(); });
+        }
+
+        function broadcastProfile() {
+            const payload = { type: 'PROFILE', id: user.id, name: user.name, color: user.color };
+            Object.values(connections).forEach(conn => { if (conn.open) conn.send(payload); });
         }
 
         function broadcastData() {
@@ -443,13 +582,20 @@
         }
 
         function copyId() { 
-            // Create full URL with hash
             const url = window.location.origin + window.location.pathname + '#' + myPeerId;
             navigator.clipboard.writeText(url); 
-            alert("Shareable Link Copied!\nSend this URL to a friend to auto-connect."); 
+            alert("Shareable Link Copied!"); 
         }
 
-        // --- MERGE LOGIC ---
+        // --- DATA HANDLING ---
+        function handleProfileMessage(msg) {
+            // Update local map of who is who
+            peerProfiles[msg.id] = { name: msg.name, color: msg.color };
+            saveProfiles();
+            // Re-render tasks to reflect new names/colors
+            renderTasks();
+        }
+
         function handleSyncMessage(msg) {
             const { listId, listName, tasks: remoteTasks } = msg;
             if (!appData[listId]) {
@@ -478,10 +624,10 @@
             }
         }
 
-        // --- TASK LOGIC ---
-        function saveData() { localStorage.setItem('taskerMesh_v3', JSON.stringify(appData)); }
+        function saveData() { localStorage.setItem('taskerMesh_v4', JSON.stringify(appData)); }
         function saveAndBroadcast() { saveData(); renderTasks(); broadcastData(); }
 
+        // --- TASK LOGIC ---
         function addTask() {
             const input = document.getElementById('mainInput');
             const text = input.value.trim();
@@ -491,8 +637,9 @@
                 id: myPeerId + '-' + Date.now(),
                 text: text,
                 completed: false,
-                author: user.name,
-                authorColor: user.color,
+                authorId: user.id, // Store ID (Hidden Cache)
+                author: user.name, // Fallback
+                authorColor: user.color, // Fallback
                 lastUpdated: Date.now(),
                 deleted: false,
                 deletedBy: null,
@@ -534,6 +681,15 @@
         }
 
         // --- RENDERING ---
+        function getAuthorDetails(task) {
+            // Try to find author by ID in our profile map
+            if (task.authorId && peerProfiles[task.authorId]) {
+                return peerProfiles[task.authorId];
+            }
+            // Fallback to stored snapshot
+            return { name: task.author, color: task.authorColor };
+        }
+
         function renderTasks() {
             const ul = document.getElementById('taskList');
             ul.innerHTML = '';
@@ -549,7 +705,10 @@
                 const li = document.createElement('li');
                 li.className = 'task-item';
                 if (task.deleted) li.classList.add('marked-deleted');
-                li.style.borderLeftColor = task.authorColor;
+                
+                // Dynamic Author Lookup
+                const authorInfo = getAuthorDetails(task);
+                li.style.borderLeftColor = authorInfo.color;
 
                 let actionBtn = '';
                 if (task.deleted) {
@@ -562,7 +721,7 @@
                 if (task.deleted) {
                     statusText = `<span style="color:var(--deleted-text); font-weight:bold;">Deleted by ${task.deletedBy || 'someone'}</span>`;
                 } else {
-                    statusText = `Added by <span class="author-tag" style="color:${task.authorColor}">${task.author}</span>`;
+                    statusText = `Added by <span class="author-tag" style="color:${authorInfo.color}">${authorInfo.name}</span>`;
                 }
 
                 li.innerHTML = `
@@ -599,11 +758,6 @@
             const task = appData[activeListId].tasks.find(t => t.id === parentId);
             const sub = task.subtasks.find(s => s.id === subId);
             if(sub) { sub.completed = !sub.completed; task.lastUpdated = Date.now(); saveAndBroadcast(); }
-        }
-
-        function toggleTheme() {
-            document.body.classList.toggle('dark-mode');
-            localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
         }
 
         document.getElementById('mainInput').addEventListener('keypress', e => { if(e.key === 'Enter') addTask() });
