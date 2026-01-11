@@ -5,17 +5,56 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tasker</title>
     
-    <!-- 
-       FAVICON: 
-       This is a Data URI. It renders a Green Checkmark (✅) as the tab icon 
-       without needing an external image file.
-    -->
+    <!-- Favicon -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✅</text></svg>">
 
     <style>
+        /* --- THEME VARIABLES --- */
+        :root {
+            /* Light Mode (Default) */
+            --bg-body: #f4f7f6;
+            --bg-container: #ffffff;
+            --text-primary: #333333;
+            --text-secondary: #555555;
+            --text-muted: #95a5a6;
+            --border-color: #eeeeee;
+            --border-hover: #3498db;
+            --input-bg: #ffffff;
+            --btn-primary: #3498db;
+            --btn-primary-hover: #2980b9;
+            --btn-secondary: #f1f2f6;
+            --btn-secondary-hover: #dfe4ea;
+            --shadow: 0 5px 20px rgba(0,0,0,0.1);
+            --item-shadow: 0 2px 5px rgba(0,0,0,0.02);
+            --footer-link: #95a5a6;
+            --footer-link-hover: #3498db;
+        }
+
+        body.dark-mode {
+            /* Dark Mode Overrides */
+            --bg-body: #121212;
+            --bg-container: #1e1e1e;
+            --text-primary: #e0e0e0;
+            --text-secondary: #b0b0b0;
+            --text-muted: #777777;
+            --border-color: #333333;
+            --border-hover: #5dade2;
+            --input-bg: #2d2d2d;
+            --btn-primary: #2980b9;
+            --btn-primary-hover: #3498db;
+            --btn-secondary: #333333;
+            --btn-secondary-hover: #444444;
+            --shadow: 0 5px 20px rgba(0,0,0,0.5);
+            --item-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            --footer-link: #777777;
+            --footer-link-hover: #e0e0e0;
+        }
+
+        /* --- GLOBAL STYLES --- */
         body {
             font-family: 'Segoe UI', 'Roboto', Helvetica, Arial, sans-serif;
-            background-color: #f4f7f6;
+            background-color: var(--bg-body);
+            color: var(--text-primary);
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -23,49 +62,76 @@
             min-height: 100vh;
             margin: 0;
             box-sizing: border-box;
+            transition: background-color 0.3s, color 0.3s;
         }
 
         .container {
-            background: white;
+            background: var(--bg-container);
             width: 450px;
             max-width: 90%;
             padding: 25px;
             border-radius: 12px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            box-shadow: var(--shadow);
             margin-bottom: 20px;
+            transition: background 0.3s, box-shadow 0.3s;
+            position: relative;
+        }
+
+        /* Header & Theme Toggle */
+        .header-row {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            margin-bottom: 10px;
         }
 
         h2 { 
-            text-align: center; 
-            color: #2c3e50; 
-            margin-top: 0; 
+            margin: 0; 
+            color: var(--text-primary); 
             font-weight: 700;
             letter-spacing: 1px;
         }
+
+        .theme-toggle-btn {
+            position: absolute;
+            right: 0;
+            top: 0;
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 50%;
+            transition: transform 0.2s;
+        }
+        .theme-toggle-btn:hover { transform: scale(1.1); background-color: var(--border-color); }
         
         .info-text {
             font-size: 12px;
-            color: #95a5a6;
+            color: var(--text-muted);
             text-align: center;
             margin-bottom: 20px;
         }
 
-        /* Input Area */
+        /* Inputs */
         .main-input-group { display: flex; gap: 10px; margin-bottom: 25px; }
 
         input[type="text"] {
             flex-grow: 1;
             padding: 10px;
-            border: 2px solid #eee;
+            background-color: var(--input-bg);
+            color: var(--text-primary);
+            border: 2px solid var(--border-color);
             border-radius: 6px;
             outline: none;
-            transition: border-color 0.2s;
+            transition: border-color 0.2s, background-color 0.3s;
         }
-        input[type="text"]:focus { border-color: #3498db; }
+        input[type="text"]:focus { border-color: var(--border-hover); }
 
         button.primary-btn {
             padding: 10px 20px;
-            background-color: #3498db;
+            background-color: var(--btn-primary);
             color: white;
             border: none;
             border-radius: 6px;
@@ -73,24 +139,24 @@
             font-weight: bold;
             transition: background 0.2s;
         }
-        button.primary-btn:hover { background-color: #2980b9; }
+        button.primary-btn:hover { background-color: var(--btn-primary-hover); }
 
-        /* Task List Styling */
+        /* Task List */
         ul { list-style-type: none; padding: 0; }
 
         li.task-item {
-            background: #fff;
-            border: 1px solid #f0f0f0;
+            background: var(--bg-container);
+            border: 1px solid var(--border-color);
             border-radius: 8px;
             margin-bottom: 15px;
             padding: 10px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
-            transition: transform 0.2s;
+            box-shadow: var(--item-shadow);
+            transition: transform 0.2s, border-color 0.3s;
         }
         
         li.task-item:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+            border-color: var(--border-hover);
         }
 
         .task-header {
@@ -100,14 +166,14 @@
             padding-bottom: 5px;
         }
 
-        .task-text { flex-grow: 1; font-size: 17px; font-weight: 500; color: #333; }
-        .completed { text-decoration: line-through; color: #aaa; }
+        .task-text { flex-grow: 1; font-size: 17px; font-weight: 500; color: var(--text-primary); }
+        .completed { text-decoration: line-through; color: var(--text-muted); }
 
-        /* Subtask Styling */
+        /* Subtasks */
         .subtask-container {
             margin-left: 30px; 
             padding-top: 5px;
-            border-top: 1px dashed #eee;
+            border-top: 1px dashed var(--border-color);
         }
 
         .subtask-list li {
@@ -116,7 +182,7 @@
             gap: 10px;
             padding: 6px 0;
             font-size: 14px;
-            color: #555;
+            color: var(--text-secondary);
         }
 
         .subtask-input-group {
@@ -128,21 +194,19 @@
         .subtask-input-group input {
             padding: 6px;
             font-size: 13px;
-            border: 1px solid #eee;
-            border-radius: 4px;
         }
 
         .subtask-btn {
             padding: 5px 10px;
-            background-color: #f1f2f6;
-            color: #57606f;
+            background-color: var(--btn-secondary);
+            color: var(--text-secondary);
             border: none;
             border-radius: 4px;
             cursor: pointer;
             font-size: 12px;
             font-weight: 600;
         }
-        .subtask-btn:hover { background-color: #dfe4ea; }
+        .subtask-btn:hover { background-color: var(--btn-secondary-hover); }
 
         /* Controls */
         input[type="checkbox"] {
@@ -161,24 +225,24 @@
             opacity: 0.6;
             transition: opacity 0.2s;
         }
-        .delete-btn:hover { background-color: #ffe6e6; opacity: 1; }
+        .delete-btn:hover { background-color: #661812; opacity: 1; } /* Darker red hover for dark mode contrast */
 
-        /* Footer / Repo Link */
+        /* Footer */
         footer {
             margin-top: auto;
             margin-bottom: 20px;
             font-size: 12px;
-            color: #bdc3c7;
         }
         footer a {
-            color: #95a5a6;
+            color: var(--footer-link);
             text-decoration: none;
             display: flex;
             align-items: center;
             gap: 5px;
+            transition: color 0.3s;
         }
         footer a:hover {
-            color: #3498db;
+            color: var(--footer-link-hover);
             text-decoration: underline;
         }
     </style>
@@ -186,7 +250,10 @@
 <body>
 
     <div class="container">
-        <h2>Tasker</h2>
+        <div class="header-row">
+            <h2>Tasker</h2>
+            <button id="themeToggle" class="theme-toggle-btn" title="Toggle Dark Mode">🌙</button>
+        </div>
         <p class="info-text">Completed tasks auto-delete after 24h.</p>
         
         <div class="main-input-group">
@@ -199,7 +266,6 @@
 
     <footer>
         <a href="https://github.com/mmk1102x/tasker" target="_blank">
-            <!-- Simple GitHub Icon SVG -->
             <svg height="16" width="16" viewBox="0 0 16 16" fill="currentColor">
                 <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path>
             </svg>
@@ -208,7 +274,26 @@
     </footer>
 
     <script>
-        // --- DATA LAYER ---
+        // --- THEME LOGIC ---
+        const themeBtn = document.getElementById('themeToggle');
+        const body = document.body;
+        
+        // Load Saved Theme
+        const savedTheme = localStorage.getItem('taskerTheme');
+        if (savedTheme === 'dark') {
+            body.classList.add('dark-mode');
+            themeBtn.textContent = '☀️';
+        }
+
+        themeBtn.addEventListener('click', () => {
+            body.classList.toggle('dark-mode');
+            const isDark = body.classList.contains('dark-mode');
+            themeBtn.textContent = isDark ? '☀️' : '🌙';
+            localStorage.setItem('taskerTheme', isDark ? 'dark' : 'light');
+        });
+
+
+        // --- TASK DATA LAYER ---
         let tasks = JSON.parse(localStorage.getItem('taskerData')) || [];
 
         // Initialize
@@ -258,13 +343,17 @@
 
             const task = tasks.find(t => t.id === parentId);
             if (task) {
+                if (task.completed) {
+                    task.completed = false; 
+                    task.completedAt = null;
+                }
+
                 task.subtasks.push({
                     id: Date.now() + Math.random(),
                     text: text,
                     completed: false
                 });
                 saveAndRender();
-                // Keep focus on input for rapid entry
                 setTimeout(() => document.getElementById(`sub-input-${parentId}`).focus(), 10);
             }
         }
@@ -275,6 +364,18 @@
                 const sub = task.subtasks.find(s => s.id === subtaskId);
                 if (sub) {
                     sub.completed = !sub.completed;
+                    
+                    // Logic: If all subtasks completed, complete parent
+                    const allSubtasksComplete = task.subtasks.every(s => s.completed);
+
+                    if (allSubtasksComplete) {
+                        task.completed = true;
+                        task.completedAt = Date.now();
+                    } else {
+                        task.completed = false;
+                        task.completedAt = null;
+                    }
+
                     saveAndRender();
                 }
             }
@@ -284,6 +385,12 @@
             const task = tasks.find(t => t.id === parentId);
             if (task) {
                 task.subtasks = task.subtasks.filter(s => s.id !== subtaskId);
+                
+                if (task.subtasks.length > 0 && task.subtasks.every(s => s.completed)) {
+                    task.completed = true;
+                    task.completedAt = Date.now();
+                }
+                
                 saveAndRender();
             }
         }
