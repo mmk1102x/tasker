@@ -22,7 +22,7 @@
             --deleted-bg: #ffecec;
             --deleted-border: #ffcccc;
             --deleted-text: #c0392b;
-            --outline-color: #fff; /* Default outline for dark text */
+            --outline-color: #fff;
         }
 
         body.dark-mode {
@@ -37,7 +37,7 @@
             --deleted-bg: #3e1a1a;
             --deleted-border: #682828;
             --deleted-text: #e74c3c;
-            --outline-color: #000; /* Dark outline for light text */
+            --outline-color: #000;
         }
 
         body {
@@ -51,7 +51,6 @@
             transition: background-color 0.3s, color 0.3s;
         }
 
-        /* --- TEXT OUTLINE UTILITY --- */
         .text-outline {
             text-shadow: 
                 -1px -1px 0 var(--outline-color),  
@@ -61,10 +60,8 @@
             letter-spacing: 0.5px;
         }
 
-        /* --- LAYOUT --- */
         .app-layout { display: flex; width: 100%; height: 100%; }
 
-        /* --- SIDEBAR --- */
         .sidebar {
             width: var(--sidebar-width);
             background: var(--bg-sidebar);
@@ -85,7 +82,6 @@
             align-items: center;
         }
 
-        /* User Profile Box */
         .user-profile-box {
             background: rgba(0,0,0,0.05);
             padding: 10px;
@@ -131,7 +127,6 @@
 
         .sidebar-controls { margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 15px; }
 
-        /* Toggle Switch */
         .toggle-row { display: flex; align-items: center; justify-content: space-between; font-size: 13px; margin-bottom: 10px; }
         .switch { position: relative; display: inline-block; width: 34px; height: 20px; }
         .switch input { opacity: 0; width: 0; height: 0; }
@@ -147,7 +142,6 @@
         }
         .add-team-btn:hover { border-color: var(--btn-primary); color: var(--btn-primary); }
 
-        /* --- MAIN CONTENT --- */
         .main-content {
             flex-grow: 1; padding: 30px; overflow-y: auto;
             background: var(--bg-container); display: flex; flex-direction: column; align-items: center;
@@ -155,7 +149,6 @@
         }
         .content-wrapper { width: 600px; max-width: 100%; }
 
-        /* --- MODAL --- */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 1000;
@@ -170,7 +163,6 @@
             background: var(--bg-body); color: var(--text-primary);
         }
 
-        /* --- NETWORK PANEL --- */
         .network-panel {
             background: rgba(0,0,0,0.03); border: 1px solid var(--border-color);
             padding: 15px; border-radius: 8px; margin-bottom: 20px; font-size: 13px;
@@ -190,7 +182,6 @@
         .peer-list { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 5px; }
         .peer-badge { background: #27ae60; color: white; padding: 2px 8px; border-radius: 10px; font-size: 11px; }
 
-        /* --- TASKS --- */
         .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         h2 { margin: 0; }
 
@@ -374,13 +365,20 @@
         if(savedSettings) settings = JSON.parse(savedSettings);
         document.getElementById('autoDeleteToggle').checked = settings.autoDelete;
 
-        // 5. Fetch Custom Colors
+        // 5. Fetch Custom Colors (FIXED URL)
         async function loadCustomColors() {
+            // Correctly appending the query parameter with '?t='
+            const url = 'https://raw.githubusercontent.com/mmk1102x/tasker/refs/heads/main/users.json?t=' + Date.now();
+            console.log("🎨 TASKER DEBUG: Attempting to fetch colors from:", url);
+            
             try {
-                // Using the RAW GitHub URL provided
-                const response = await fetch('https://raw.githubusercontent.com/mmk1102x/tasker/refs/heads/main/users.json' + Date.now());
+                const response = await fetch(url);
+                console.log("🎨 TASKER DEBUG: Response status:", response.status);
+                
                 if (response.ok) {
                     const data = await response.json();
+                    console.log("🎨 TASKER DEBUG: Loaded colors successfully:", data);
+                    
                     // Normalize to lowercase keys
                     for (let key in data) {
                         customColors[key.toLowerCase()] = data[key];
@@ -391,9 +389,11 @@
                         updateProfileUI();
                         renderTasks();
                     }
+                } else {
+                    console.error("🎨 TASKER DEBUG: Fetch failed with status", response.status);
                 }
             } catch (e) {
-                console.log("Using default/hardcoded colors (Fetch failed or file missing)");
+                console.error("🎨 TASKER DEBUG: Fetch threw an error (likely CORS or Network):", e);
             }
         }
         loadCustomColors();
