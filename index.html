@@ -333,7 +333,7 @@
         let activeListId = null;
         let settings = { autoDelete: false };
 
-        // Pre-seed with hardcoded defaults in case fetch fails
+        // Pre-seed with hardcoded defaults
         let customColors = {
             "mmk1102": "#000000",
             "author": "#000000"
@@ -377,8 +377,8 @@
         // 5. Fetch Custom Colors
         async function loadCustomColors() {
             try {
-                // Add timestamp to prevent caching
-                const response = await fetch('https://mmk1102x.github.io/tasker/users.json?t=' + Date.now());
+                // Using the RAW GitHub URL provided
+                const response = await fetch('https://raw.githubusercontent.com/mmk1102x/mmk1102x.github.io/refs/heads/main/users.json?t=' + Date.now());
                 if (response.ok) {
                     const data = await response.json();
                     // Normalize to lowercase keys
@@ -401,7 +401,7 @@
         // 6. Check Login Status
         if (peerProfiles[user.id]) {
             user.name = peerProfiles[user.id].name;
-            user.color = peerProfiles[user.id].color; // This might be stale, updated by loadCustomColors later
+            user.color = peerProfiles[user.id].color; 
             document.getElementById('loginModal').style.display = 'none';
             initApp();
         } else {
@@ -448,7 +448,12 @@
                 return customColors[lower];
             }
 
-            // 2. Fallback Hash Algorithm
+            // 2. Special Case: Alice
+            if (lower.includes('alice')) {
+                return '#F0F8FF'; 
+            }
+
+            // 3. Fallback Hash Algorithm
             let hash = 0;
             for (let i = 0; i < str.length; i++) {
                 hash = str.charCodeAt(i) + ((hash << 5) - hash);
@@ -780,6 +785,7 @@
                 if (task.deleted) {
                     statusText = `<span style="color:var(--deleted-text); font-weight:bold;">Deleted by ${task.deletedBy || 'someone'}</span>`;
                 } else {
+                    // Added text-outline class to the author name
                     statusText = `Added by <span class="author-tag text-outline" style="color:${authorInfo.color}">${authorInfo.name}</span>`;
                 }
 
