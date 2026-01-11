@@ -3,48 +3,67 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Task Manager with Auto-Cleanup</title>
+    <title>Tasker</title>
+    
+    <!-- 
+       FAVICON: 
+       This is a Data URI. It renders a Green Checkmark (✅) as the tab icon 
+       without needing an external image file.
+    -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✅</text></svg>">
+
     <style>
         body {
-            font-family: 'Segoe UI', sans-serif;
+            font-family: 'Segoe UI', 'Roboto', Helvetica, Arial, sans-serif;
             background-color: #f4f7f6;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             align-items: center;
+            padding-top: 50px;
             min-height: 100vh;
             margin: 0;
+            box-sizing: border-box;
         }
 
         .container {
             background: white;
-            width: 400px;
+            width: 450px;
+            max-width: 90%;
             padding: 25px;
             border-radius: 12px;
             box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
         }
 
-        h2 { text-align: center; color: #2c3e50; margin-top: 0; }
+        h2 { 
+            text-align: center; 
+            color: #2c3e50; 
+            margin-top: 0; 
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
         
         .info-text {
             font-size: 12px;
-            color: #7f8c8d;
+            color: #95a5a6;
             text-align: center;
             margin-bottom: 20px;
         }
 
-        .input-group { display: flex; gap: 10px; margin-bottom: 25px; }
+        /* Input Area */
+        .main-input-group { display: flex; gap: 10px; margin-bottom: 25px; }
 
         input[type="text"] {
             flex-grow: 1;
-            padding: 12px;
+            padding: 10px;
             border: 2px solid #eee;
             border-radius: 6px;
             outline: none;
+            transition: border-color 0.2s;
         }
-
         input[type="text"]:focus { border-color: #3498db; }
 
-        button#addBtn {
+        button.primary-btn {
             padding: 10px 20px;
             background-color: #3498db;
             color: white;
@@ -52,82 +71,162 @@
             border-radius: 6px;
             cursor: pointer;
             font-weight: bold;
+            transition: background 0.2s;
         }
+        button.primary-btn:hover { background-color: #2980b9; }
 
-        button#addBtn:hover { background-color: #2980b9; }
-
+        /* Task List Styling */
         ul { list-style-type: none; padding: 0; }
 
-        li {
+        li.task-item {
             background: #fff;
-            border-bottom: 1px solid #f0f0f0;
-            padding: 12px 5px;
+            border: 1px solid #f0f0f0;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            padding: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+            transition: transform 0.2s;
+        }
+        
+        li.task-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+        }
+
+        .task-header {
             display: flex;
             align-items: center;
             gap: 10px;
+            padding-bottom: 5px;
         }
 
-        input[type="checkbox"] {
-            width: 18px; 
-            height: 18px; 
-            accent-color: #27ae60;
-            cursor: pointer;
-        }
-
-        .task-text { flex-grow: 1; font-size: 16px; color: #333; }
-        
+        .task-text { flex-grow: 1; font-size: 17px; font-weight: 500; color: #333; }
         .completed { text-decoration: line-through; color: #aaa; }
 
-        .delete-btn {
-            background-color: white;
-            color: #e74c3c;
-            border: 1px solid #e74c3c;
-            border-radius: 4px;
-            padding: 5px 10px;
-            cursor: pointer;
-            font-size: 12px;
+        /* Subtask Styling */
+        .subtask-container {
+            margin-left: 30px; 
+            padding-top: 5px;
+            border-top: 1px dashed #eee;
         }
 
-        .delete-btn:hover { background-color: #e74c3c; color: white; }
+        .subtask-list li {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 6px 0;
+            font-size: 14px;
+            color: #555;
+        }
+
+        .subtask-input-group {
+            display: flex;
+            gap: 5px;
+            margin-top: 8px;
+        }
+
+        .subtask-input-group input {
+            padding: 6px;
+            font-size: 13px;
+            border: 1px solid #eee;
+            border-radius: 4px;
+        }
+
+        .subtask-btn {
+            padding: 5px 10px;
+            background-color: #f1f2f6;
+            color: #57606f;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .subtask-btn:hover { background-color: #dfe4ea; }
+
+        /* Controls */
+        input[type="checkbox"] {
+            width: 18px; height: 18px; 
+            accent-color: #27ae60; cursor: pointer;
+        }
+
+        .delete-btn {
+            background-color: transparent;
+            color: #e74c3c;
+            border: 1px solid transparent;
+            border-radius: 4px;
+            padding: 4px 8px;
+            cursor: pointer;
+            font-size: 14px;
+            opacity: 0.6;
+            transition: opacity 0.2s;
+        }
+        .delete-btn:hover { background-color: #ffe6e6; opacity: 1; }
+
+        /* Footer / Repo Link */
+        footer {
+            margin-top: auto;
+            margin-bottom: 20px;
+            font-size: 12px;
+            color: #bdc3c7;
+        }
+        footer a {
+            color: #95a5a6;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        footer a:hover {
+            color: #3498db;
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <h2>My Tasks</h2>
-        <p class="info-text">Completed tasks are removed after 24 hours.</p>
+        <h2>Tasker</h2>
+        <p class="info-text">Completed tasks auto-delete after 24h.</p>
         
-        <div class="input-group">
-            <input type="text" id="taskInput" placeholder="What needs to be done?">
-            <button id="addBtn" onclick="addTask()">Add</button>
+        <div class="main-input-group">
+            <input type="text" id="mainInput" placeholder="New Task...">
+            <button class="primary-btn" onclick="addMainTask()">Add</button>
         </div>
 
         <ul id="taskList"></ul>
     </div>
 
-    <script>
-        // --- DATA MANAGEMENT ---
-        
-        // Load tasks from Local Storage or start with empty array
-        let tasks = JSON.parse(localStorage.getItem('myTasks')) || [];
+    <footer>
+        <a href="https://github.com/mmk1102x/tasker" target="_blank">
+            <!-- Simple GitHub Icon SVG -->
+            <svg height="16" width="16" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path>
+            </svg>
+            github.com/mmk1102x/tasker
+        </a>
+    </footer>
 
-        // 1. Run cleanup immediately on load
+    <script>
+        // --- DATA LAYER ---
+        let tasks = JSON.parse(localStorage.getItem('taskerData')) || [];
+
+        // Initialize
         cleanupOldTasks();
-        // 2. Render the list
         renderTasks();
 
-        function addTask() {
-            const input = document.getElementById("taskInput");
+        // --- MAIN TASKS ---
+        function addMainTask() {
+            const input = document.getElementById("mainInput");
             const text = input.value;
+            if (text.trim() === '') return;
 
-            if (text === '') { alert("Please write a task!"); return; }
-
-            // Add new task object
             const newTask = {
-                id: Date.now(),      // Unique ID
+                id: Date.now(),
                 text: text,
                 completed: false,
-                completedAt: null    // Timestamp for when it was finished
+                completedAt: null,
+                subtasks: []
             };
 
             tasks.push(newTask);
@@ -135,50 +234,74 @@
             input.value = "";
         }
 
-        function toggleTask(id) {
-            // Find task in array
+        function toggleMainTask(id) {
             const task = tasks.find(t => t.id === id);
-            
             if (task) {
                 task.completed = !task.completed;
-                // If we just finished it, set timestamp. If unchecking, clear timestamp.
                 task.completedAt = task.completed ? Date.now() : null;
                 saveAndRender();
             }
         }
 
-        function deleteTask(id) {
-            tasks = tasks.filter(t => t.id !== id);
-            saveAndRender();
-        }
-
-        // --- THE 24-HOUR LOGIC ---
-        function cleanupOldTasks() {
-            const now = Date.now();
-            const oneDayInMs = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
-
-            // Filter out tasks that are completed AND older than 24 hours
-            const initialCount = tasks.length;
-            
-            tasks = tasks.filter(task => {
-                // Keep if NOT completed
-                if (!task.completed) return true;
-
-                // Keep if completed less than 24 hours ago
-                const timeSinceCompletion = now - task.completedAt;
-                return timeSinceCompletion < oneDayInMs;
-            });
-
-            if (tasks.length < initialCount) {
-                console.log("Cleaned up old tasks!");
-                saveData(); // Save the cleaned list
+        function deleteMainTask(id) {
+            if(confirm("Delete this task?")) {
+                tasks = tasks.filter(t => t.id !== id);
+                saveAndRender();
             }
         }
 
-        // --- RENDER & SAVE HELPERS ---
+        // --- SUBTASKS ---
+        function addSubtask(parentId) {
+            const input = document.getElementById(`sub-input-${parentId}`);
+            const text = input.value;
+            if (text.trim() === '') return;
+
+            const task = tasks.find(t => t.id === parentId);
+            if (task) {
+                task.subtasks.push({
+                    id: Date.now() + Math.random(),
+                    text: text,
+                    completed: false
+                });
+                saveAndRender();
+                // Keep focus on input for rapid entry
+                setTimeout(() => document.getElementById(`sub-input-${parentId}`).focus(), 10);
+            }
+        }
+
+        function toggleSubtask(parentId, subtaskId) {
+            const task = tasks.find(t => t.id === parentId);
+            if (task) {
+                const sub = task.subtasks.find(s => s.id === subtaskId);
+                if (sub) {
+                    sub.completed = !sub.completed;
+                    saveAndRender();
+                }
+            }
+        }
+
+        function deleteSubtask(parentId, subtaskId) {
+            const task = tasks.find(t => t.id === parentId);
+            if (task) {
+                task.subtasks = task.subtasks.filter(s => s.id !== subtaskId);
+                saveAndRender();
+            }
+        }
+
+        // --- CORE LOGIC ---
+        function cleanupOldTasks() {
+            const now = Date.now();
+            const oneDayInMs = 24 * 60 * 60 * 1000; 
+
+            tasks = tasks.filter(task => {
+                if (!task.completed) return true;
+                return (now - task.completedAt) < oneDayInMs;
+            });
+            saveData();
+        }
 
         function saveData() {
-            localStorage.setItem('myTasks', JSON.stringify(tasks));
+            localStorage.setItem('taskerData', JSON.stringify(tasks));
         }
 
         function saveAndRender() {
@@ -188,40 +311,60 @@
 
         function renderTasks() {
             const ul = document.getElementById("taskList");
-            ul.innerHTML = ""; // Clear current list
+            ul.innerHTML = "";
 
             tasks.forEach(task => {
                 const li = document.createElement("li");
+                li.className = "task-item";
 
-                // Checkbox
-                const checkbox = document.createElement("input");
-                checkbox.type = "checkbox";
-                checkbox.checked = task.completed;
-                checkbox.onclick = () => toggleTask(task.id);
+                // Header
+                const header = document.createElement("div");
+                header.className = "task-header";
+                header.innerHTML = `
+                    <input type="checkbox" ${task.completed ? "checked" : ""} onchange="toggleMainTask(${task.id})">
+                    <span class="task-text ${task.completed ? "completed" : ""}">${task.text}</span>
+                    <button class="delete-btn" title="Delete Task" onclick="deleteMainTask(${task.id})">✕</button>
+                `;
 
-                // Text
-                const span = document.createElement("span");
-                span.textContent = task.text;
-                span.className = "task-text " + (task.completed ? "completed" : "");
+                // Subtasks
+                const subContainer = document.createElement("div");
+                subContainer.className = "subtask-container";
 
-                // Delete Button
-                const deleteBtn = document.createElement("button");
-                deleteBtn.textContent = "✕";
-                deleteBtn.className = "delete-btn";
-                deleteBtn.onclick = () => deleteTask(task.id);
+                const subUl = document.createElement("ul");
+                subUl.className = "subtask-list";
+                
+                task.subtasks.forEach(sub => {
+                    const subLi = document.createElement("li");
+                    subLi.innerHTML = `
+                        <input type="checkbox" ${sub.completed ? "checked" : ""} onchange="toggleSubtask(${task.id}, ${sub.id})">
+                        <span class="${sub.completed ? "completed" : ""}">${sub.text}</span>
+                        <button class="delete-btn" title="Delete Subtask" onclick="deleteSubtask(${task.id}, ${sub.id})">✕</button>
+                    `;
+                    subUl.appendChild(subLi);
+                });
 
-                li.appendChild(checkbox);
-                li.appendChild(span);
-                li.appendChild(deleteBtn);
+                // Subtask Input
+                const subInputDiv = document.createElement("div");
+                subInputDiv.className = "subtask-input-group";
+                subInputDiv.innerHTML = `
+                    <input type="text" id="sub-input-${task.id}" placeholder="Subtask..." 
+                        onkeypress="if(event.key === 'Enter') addSubtask(${task.id})">
+                    <button class="subtask-btn" onclick="addSubtask(${task.id})">Add</button>
+                `;
+
+                subContainer.appendChild(subUl);
+                subContainer.appendChild(subInputDiv);
+                
+                li.appendChild(header);
+                li.appendChild(subContainer);
                 ul.appendChild(li);
             });
         }
 
-        // Allow Enter key
-        document.getElementById("taskInput").addEventListener("keypress", function(e) {
-            if (e.key === "Enter") addTask();
+        // Global Enter Key
+        document.getElementById("mainInput").addEventListener("keypress", function(e) {
+            if (e.key === "Enter") addMainTask();
         });
     </script>
-
 </body>
 </html>
