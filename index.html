@@ -378,7 +378,7 @@
         async function loadCustomColors() {
             try {
                 // Using the RAW GitHub URL provided
-                const response = await fetch('https://mmk1102x.github.io/tasker/users.json' + Date.now());
+                const response = await fetch('https://raw.githubusercontent.com/mmk1102x/tasker/refs/heads/main/users.json' + Date.now());
                 if (response.ok) {
                     const data = await response.json();
                     // Normalize to lowercase keys
