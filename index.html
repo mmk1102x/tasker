@@ -49,7 +49,8 @@
                 <button class="edit-name-btn" onclick="openProfileModal()" title="Change Name">✎</button>
             </div>
             
-            <div style="font-size:12px; font-weight:bold; margin-bottom:5px; color:var(--text-secondary);">TEAMS</div>
+            <!-- RENAMED TO LISTS -->
+            <div style="font-size:12px; font-weight:bold; margin-bottom:5px; color:var(--text-secondary);">LISTS</div>
             <ul class="team-list" id="teamListUi"></ul>
             
             <div class="sidebar-controls">
@@ -60,7 +61,8 @@
                         <span class="slider"></span>
                     </label>
                 </div>
-                <button class="add-team-btn" onclick="createNewTeam()">+ New Team</button>
+                <!-- RENAMED BUTTON -->
+                <button class="add-team-btn" onclick="createNewTeam()">+ New List</button>
             </div>
         </div>
 
@@ -73,7 +75,8 @@
                         <button class="mobile-menu-btn" onclick="openSidebar()">☰</button>
                         <h2 id="currentTeamTitle">Loading...</h2>
                     </div>
-                    <button class="delete-btn" onclick="deleteCurrentTeam()" title="Delete this team list">🗑️</button>
+                    <!-- RENAMED TOOLTIP -->
+                    <button class="delete-btn" onclick="deleteCurrentTeam()" title="Delete this list">🗑️</button>
                 </div>
 
                 <!-- NETWORK PANEL -->
@@ -99,7 +102,6 @@
         </div>
     </div>
 
-    <!-- Your Logic File -->
     <script src="script.js"></script>
 </body>
 </html>
