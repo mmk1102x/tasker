@@ -4,19 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Tasker</title>
-    
-    <!-- External Libraries -->
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
-    
-    <!-- Your CSS File -->
     <link rel="stylesheet" href="style.css">
-    
-    <!-- Favicon -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✅</text></svg>">
 </head>
 <body>
 
-    <!-- LOGIN / RENAME MODAL -->
+    <!-- LOGIN MODAL -->
     <div id="loginModal" class="modal-overlay" style="display: flex;">
         <div class="modal-box">
             <h3 id="modalTitle">Welcome to Tasker</h3>
@@ -26,21 +20,22 @@
         </div>
     </div>
 
-    <!-- MOBILE OVERLAY BACKDROP -->
-    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+    <!-- MOBILE OVERLAYS -->
+    <div class="sidebar-overlay" id="leftOverlay" onclick="closeSidebars()"></div>
+    <div class="sidebar-overlay" id="rightOverlay" onclick="closeSidebars()"></div>
 
     <div class="app-layout">
-        <!-- SIDEBAR -->
-        <div class="sidebar" id="sidebar">
+        
+        <!-- LEFT SIDEBAR (Teams) -->
+        <div class="sidebar left-sidebar" id="leftSidebar">
             <div class="sidebar-header">
                 <span>Tasker</span>
                 <div style="display:flex; gap:10px; align-items:center;">
                     <button class="theme-btn" id="themeToggleBtn" onclick="toggleTheme()">🌙</button>
-                    <button class="close-sidebar-btn" onclick="closeSidebar()">✕</button>
+                    <button class="close-sidebar-btn" onclick="closeSidebars()">✕</button>
                 </div>
             </div>
 
-            <!-- User Profile -->
             <div class="user-profile-box">
                 <div class="user-avatar" id="userAvatar">?</div>
                 <div class="user-info">
@@ -49,8 +44,7 @@
                 <button class="edit-name-btn" onclick="openProfileModal()" title="Change Name">✎</button>
             </div>
             
-            <!-- RENAMED TO LISTS -->
-            <div style="font-size:12px; font-weight:bold; margin-bottom:5px; color:var(--text-secondary);">LISTS</div>
+            <div class="section-label">TEAMS</div>
             <ul class="team-list" id="teamListUi"></ul>
             
             <div class="sidebar-controls">
@@ -61,8 +55,7 @@
                         <span class="slider"></span>
                     </label>
                 </div>
-                <!-- RENAMED BUTTON -->
-                <button class="add-team-btn" onclick="createNewTeam()">+ New List</button>
+                <button class="add-team-btn" onclick="createNewTeam()">+ New Team</button>
             </div>
         </div>
 
@@ -71,12 +64,14 @@
             <div class="content-wrapper">
                 
                 <div class="header-row">
-                    <div class="header-title-group">
-                        <button class="mobile-menu-btn" onclick="openSidebar()">☰</button>
+                    <div class="header-left">
+                        <button class="mobile-menu-btn" onclick="openLeftSidebar()">☰</button>
                         <h2 id="currentTeamTitle">Loading...</h2>
                     </div>
-                    <!-- RENAMED TOOLTIP -->
-                    <button class="delete-btn" onclick="deleteCurrentTeam()" title="Delete this list">🗑️</button>
+                    <div class="header-right">
+                        <button class="mobile-menu-btn" onclick="openRightSidebar()">👥</button>
+                        <button class="delete-btn" onclick="deleteCurrentTeam()" title="Delete this team list">🗑️</button>
+                    </div>
                 </div>
 
                 <!-- NETWORK PANEL -->
@@ -88,7 +83,6 @@
                         <input type="text" id="peerIdInput" class="connect-input" placeholder="Paste a friend's ID">
                         <button class="action-btn" onclick="connectToPeer()">Connect</button>
                     </div>
-                    <div class="peer-list" id="peerList"></div>
                 </div>
 
                 <!-- TASK INPUT -->
@@ -100,6 +94,22 @@
                 <ul id="taskList"></ul>
             </div>
         </div>
+
+        <!-- RIGHT SIDEBAR (Users/Filter) -->
+        <div class="sidebar right-sidebar" id="rightSidebar">
+            <div class="sidebar-header">
+                <span>Filter by User</span>
+                <button class="close-sidebar-btn" onclick="closeSidebars()">✕</button>
+            </div>
+            <div class="section-label">TAP TO FILTER</div>
+            <ul class="user-filter-list" id="userFilterList">
+                <!-- Users injected here via JS -->
+            </ul>
+            <div style="margin-top:auto; font-size:12px; color:var(--text-secondary); text-align:center; padding:10px;">
+                <span class="online-dot"></span> = Online Now
+            </div>
+        </div>
+
     </div>
 
     <script src="script.js"></script>
