@@ -219,7 +219,8 @@ function renderSidebar() {
 }
 
 function createNewTeam() {
-    const name = prompt("Enter Team Name:");
+    // RENAMED PROMPT
+    const name = prompt("Enter List Name:");
     if(!name) return;
     const newId = 'team-' + Date.now() + Math.random().toString(36).substr(2, 5);
     appData[newId] = { name: name, tasks: [] };
@@ -234,8 +235,9 @@ function switchTeam(id) {
 }
 
 function deleteCurrentTeam() {
-    if(Object.keys(appData).length <= 1) return alert("Cannot delete the last team.");
-    if(!confirm("Delete this team?")) return;
+    // RENAMED ALERTS
+    if(Object.keys(appData).length <= 1) return alert("Cannot delete the last list.");
+    if(!confirm("Delete this list?")) return;
     delete appData[activeListId];
     activeListId = Object.keys(appData)[0];
     saveData();
