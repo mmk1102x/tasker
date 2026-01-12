@@ -51,7 +51,7 @@ body {
 
 .app-layout { display: flex; width: 100%; height: 100%; position: relative; }
 
-/* --- SIDEBARS (Shared) --- */
+/* --- SIDEBARS --- */
 .sidebar {
     width: var(--sidebar-width);
     background: var(--bg-sidebar);
@@ -71,7 +71,7 @@ body {
     display: flex; justify-content: space-between; align-items: center;
 }
 
-/* User Filter List (Right Sidebar) */
+/* User Filter List */
 .user-filter-list { list-style: none; padding: 0; flex-grow: 1; overflow-y: auto; }
 .user-filter-item {
     padding: 8px 10px; margin-bottom: 5px; border-radius: 6px;
@@ -79,20 +79,13 @@ body {
     border: 1px solid transparent; transition: 0.2s;
 }
 .user-filter-item:hover { background: rgba(0,0,0,0.05); }
-.user-filter-item.selected {
-    background: var(--active-item);
-    border-color: var(--btn-primary);
-    font-weight: bold;
-}
+.user-filter-item.selected { background: var(--active-item); border-color: var(--btn-primary); font-weight: bold; }
 .mini-avatar {
     width: 24px; height: 24px; border-radius: 50%;
     display: flex; justify-content: center; align-items: center;
     font-size: 12px; font-weight: bold; border: 1px solid rgba(0,0,0,0.1);
 }
-.online-dot {
-    width: 8px; height: 8px; background-color: #27ae60; border-radius: 50%;
-    display: inline-block; margin-left: auto;
-}
+.online-dot { width: 8px; height: 8px; background-color: #27ae60; border-radius: 50%; display: inline-block; margin-left: auto; }
 
 /* Mobile Overlay */
 .sidebar-overlay {
@@ -136,8 +129,17 @@ input:checked + .slider:before { transform: translateX(16px); }
 .add-team-btn {
     width: 100%; padding: 12px; background: transparent;
     border: 1px dashed var(--border-color); color: var(--text-secondary);
-    cursor: pointer; border-radius: 6px; font-size: 14px;
+    cursor: pointer; border-radius: 6px; font-size: 14px; margin-bottom: 10px;
 }
+.add-team-btn:hover { border-color: var(--btn-primary); color: var(--btn-primary); }
+
+.delete-team-btn {
+    width: 100%; padding: 10px; background: transparent;
+    border: 1px solid transparent; color: #e74c3c;
+    cursor: pointer; border-radius: 6px; font-size: 13px;
+    opacity: 0.7; transition: 0.2s;
+}
+.delete-team-btn:hover { background: rgba(231, 76, 60, 0.1); opacity: 1; }
 
 /* --- MAIN CONTENT --- */
 .main-content {
@@ -152,9 +154,10 @@ input:checked + .slider:before { transform: translateX(16px); }
 .header-left, .header-right { display: flex; align-items: center; gap: 10px; }
 h2 { margin: 0; font-size: 24px; line-height: 1; padding-top: 2px; }
 
+/* HIDE HAMBURGER ON DESKTOP */
 .mobile-menu-btn {
     display: none; background: none; border: none; font-size: 24px; cursor: pointer;
-    color: var(--text-primary); padding: 0; line-height: 1; display: flex; align-items: center;
+    color: var(--text-primary); padding: 0; line-height: 1; align-items: center;
 }
 .close-sidebar-btn { display: none; background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-primary); }
 
@@ -244,8 +247,11 @@ input[type="checkbox"] { width: 20px; height: 20px; accent-color: #27ae60; curso
     .right-sidebar.open { transform: translateX(0); }
     
     .sidebar-overlay.open { display: block; opacity: 1; }
+    
+    /* SHOW HAMBURGER ON MOBILE */
     .mobile-menu-btn { display: flex; }
     .close-sidebar-btn { display: block; }
+    
     .main-content { padding: 15px; }
     .content-wrapper { width: 100%; }
 }

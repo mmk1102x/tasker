@@ -20,7 +20,7 @@ let peerProfiles = {};
 let appData = {}; 
 let activeListId = null;
 let settings = { autoDelete: false };
-let activeFilters = new Set(); // Stores IDs of selected users
+let activeFilters = new Set(); 
 
 let customColors = { "mmk1102": "#000000", "mmk1102x": "#000000", "author": "#000000" };
 let peer = null;
@@ -42,9 +42,15 @@ if (storedProfiles) peerProfiles = JSON.parse(storedProfiles);
 const savedData = localStorage.getItem('taskerMesh_v4');
 if (savedData) {
     appData = JSON.parse(savedData);
-    activeListId = Object.keys(appData)[0];
+    // Try to load the last used list
+    const lastActive = localStorage.getItem('taskerActiveListId');
+    if (lastActive && appData[lastActive]) {
+        activeListId = lastActive;
+    } else {
+        activeListId = Object.keys(appData)[0];
+    }
 } else {
-    const defId = 'team-' + Date.now();
+    const defId = 'list-' + Date.now();
     appData[defId] = { name: 'General', tasks: [] };
     activeListId = defId;
 }
@@ -164,7 +170,7 @@ function initApp() {
     renderSidebar();
     renderTasks();
     updateProfileUI();
-    updateUserListUI(); // Initial render of user list
+    updateUserListUI(); 
 }
 
 function toggleAutoDelete() {
@@ -173,7 +179,7 @@ function toggleAutoDelete() {
     renderTasks(); 
 }
 
-// --- TEAMS ---
+// --- LISTS (Formerly Teams) ---
 function renderSidebar() {
     const listUi = document.getElementById('teamListUi');
     listUi.innerHTML = '';
@@ -192,32 +198,31 @@ function renderSidebar() {
 }
 
 function createNewTeam() {
-    const name = prompt("Enter Team Name:");
+    const name = prompt("Enter List Name:");
     if(!name) return;
-    const newId = 'team-' + Date.now() + Math.random().toString(36).substr(2, 5);
+    const newId = 'list-' + Date.now() + Math.random().toString(36).substr(2, 5);
     appData[newId] = { name: name, tasks: [] };
-    saveData(); // FIX: Save immediately so it persists
+    saveData(); 
     switchTeam(newId);
     if(window.innerWidth <= 900) closeSidebars();
 }
 
 function switchTeam(id) {
     activeListId = id;
-    activeFilters.clear(); // Clear filters when switching teams
+    localStorage.setItem('taskerActiveListId', id); // Persist active list
+    activeFilters.clear(); 
     renderSidebar();
     renderTasks();
     updateUserListUI();
 }
 
 function deleteCurrentTeam() {
-    if(Object.keys(appData).length <= 1) return alert("Cannot delete the last team.");
-    if(!confirm("Delete this team?")) return;
+    if(Object.keys(appData).length <= 1) return alert("Cannot delete the last list.");
+    if(!confirm("Delete this list?")) return;
     delete appData[activeListId];
     activeListId = Object.keys(appData)[0];
     saveData();
-    renderSidebar();
-    renderTasks();
-    updateUserListUI();
+    switchTeam(activeListId); // Ensure UI updates correctly
 }
 
 // --- USER FILTER LOGIC ---
@@ -235,32 +240,19 @@ function updateUserListUI() {
     const listUi = document.getElementById('userFilterList');
     listUi.innerHTML = '';
 
-    // 1. Gather all unique authors from current tasks
     const uniqueUsers = new Map();
-    
-    // Add Self
     uniqueUsers.set(user.id, { name: user.name, color: user.color, isOnline: true });
 
-    // Add Connected Peers
-    Object.keys(connections).forEach(peerId => {
-        // We might not know their internal UserID yet, but we know they are connected
-        // Ideally we map PeerID -> UserID via profile exchange.
-        // For now, we rely on the tasks they sent or profile updates.
-        // We iterate peerProfiles to find online ones.
-    });
-
-    // Add Authors from Tasks
     if (appData[activeListId]) {
         appData[activeListId].tasks.forEach(task => {
             const info = getAuthorDetails(task);
-            const uid = task.authorId || task.author; // Fallback for old tasks
+            const uid = task.authorId || task.author; 
             if (!uniqueUsers.has(uid)) {
                 uniqueUsers.set(uid, { ...info, isOnline: false });
             }
         });
     }
 
-    // Render
     uniqueUsers.forEach((info, uid) => {
         const li = document.createElement('li');
         li.className = `user-filter-item ${activeFilters.has(uid) ? 'selected' : ''}`;
@@ -447,7 +439,6 @@ function renderTasks() {
         if (t._localDismissed) return false; 
         if (t.deleted && settings.autoDelete) return false; 
         
-        // FILTER LOGIC
         if (activeFilters.size > 0) {
             const uid = t.authorId || t.author;
             if (!activeFilters.has(uid)) return false;
